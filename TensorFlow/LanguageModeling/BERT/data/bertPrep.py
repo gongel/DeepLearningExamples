@@ -15,7 +15,6 @@ import BookscorpusTextFormatting
 import Downloader
 import TextSharding
 import WikicorpusTextFormatting
-import PubMedTextFormatting
 
 import argparse
 import itertools
