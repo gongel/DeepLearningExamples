@@ -26,7 +26,7 @@ import subprocess
 
 
 def main(args):
-    working_dir = os.environ['BERT_PREP_WORKING_DIR']
+    working_dir = './'
 
     print('Working Directory:', working_dir)
     print('Action:', args.action)
@@ -80,7 +80,7 @@ def main(args):
 
         elif args.dataset == 'wikicorpus_en':
             if args.skip_wikiextractor == 0:
-                path_to_wikiextractor_in_container = '/workspace/wikiextractor/WikiExtractor.py'
+                path_to_wikiextractor_in_container = 'WikiExtractor.py'
                 wikiextractor_command = path_to_wikiextractor_in_container + ' ' + directory_structure['download'] + '/' + args.dataset + '/wikicorpus_en.xml ' + '-b 100M --processes ' + str(args.n_processes) + ' -o ' + directory_structure['extracted'] + '/' + args.dataset
                 print('WikiExtractor Command:', wikiextractor_command)
                 wikiextractor_process = subprocess.run(wikiextractor_command, shell=True, check=True)
@@ -166,7 +166,7 @@ def main(args):
         last_process = None
 
         def create_record_worker(filename_prefix, shard_id, output_format='tfrecord', split='training'):
-            bert_preprocessing_command = 'python /workspace/bert/utils/create_pretraining_data.py'
+            bert_preprocessing_command = 'python utils/create_pretraining_data.py'
             bert_preprocessing_command += ' --input_file=' + directory_structure['sharded'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
             bert_preprocessing_command += ' --output_file=' + directory_structure['tfrecord'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(shard_id) + '.' + output_format
             bert_preprocessing_command += ' --vocab_file=' + args.vocab_file
@@ -199,42 +199,42 @@ def main(args):
         last_process.wait()
 
 
-    elif args.action == 'create_hdf5_files':
-        assert False, 'HDF5 format not fully supported in this release.'
-
-        if not os.path.exists(directory_structure['hdf5'] + "/" + args.dataset):
-            os.makedirs(directory_structure['hdf5'] + "/" + args.dataset)
-
-        last_process = None
-
-        def create_record_worker(filename_prefix, shard_id, output_format='hdf5'):
-            bert_preprocessing_command = 'python /workspace/bert/utils/create_pretraining_data.py'
-            bert_preprocessing_command += ' --input_file=' + directory_structure['sharded'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
-            bert_preprocessing_command += ' --output_file=' + directory_structure['hdf5'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.' + output_format
-            bert_preprocessing_command += ' --vocab_file=' + args.vocab_file
-            bert_preprocessing_command += ' --do_lower_case' if args.do_lower_case else ''
-            bert_preprocessing_command += ' --max_seq_length=' + args.max_seq_length
-            bert_preprocessing_command += ' --max_predictions_per_seq=' + args.max_predictions_per_seq
-            bert_preprocessing_command += ' --masked_lm_prob=' + args.masked_lm_prob
-            bert_preprocessing_command += ' --random_seed=' + args.random_seed
-            bert_preprocessing_command += ' --dupe_factor=' + args.dupe_factor
-            bert_preprocessing_process = subprocess.Popen(bert_preprocessing_command, shell=True)
-
-            last_process = bert_preprocessing_process
-
-            # This could be better optimized (fine if all take equal time)
-            if shard_id % args.n_processes == 0 and shard_id > 0:
-                bert_preprocessing_process.wait()
-
-        for i in range(args.n_training_shards):
-            create_record_worker(args.output_file_prefix + '_training', i)
-
-        last_process.wait()
-
-        for i in range(args.n_test_shards):
-            create_record_worker(args.output_file_prefix + '_test', i)
-
-        last_process.wait()
+    # elif args.action == 'create_hdf5_files':
+    #     assert False, 'HDF5 format not fully supported in this release.'
+    #
+    #     if not os.path.exists(directory_structure['hdf5'] + "/" + args.dataset):
+    #         os.makedirs(directory_structure['hdf5'] + "/" + args.dataset)
+    #
+    #     last_process = None
+    #
+    #     def create_record_worker(filename_prefix, shard_id, output_format='hdf5'):
+    #         bert_preprocessing_command = 'python /workspace/bert/utils/create_pretraining_data.py'
+    #         bert_preprocessing_command += ' --input_file=' + directory_structure['sharded'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
+    #         bert_preprocessing_command += ' --output_file=' + directory_structure['hdf5'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.' + output_format
+    #         bert_preprocessing_command += ' --vocab_file=' + args.vocab_file
+    #         bert_preprocessing_command += ' --do_lower_case' if args.do_lower_case else ''
+    #         bert_preprocessing_command += ' --max_seq_length=' + args.max_seq_length
+    #         bert_preprocessing_command += ' --max_predictions_per_seq=' + args.max_predictions_per_seq
+    #         bert_preprocessing_command += ' --masked_lm_prob=' + args.masked_lm_prob
+    #         bert_preprocessing_command += ' --random_seed=' + args.random_seed
+    #         bert_preprocessing_command += ' --dupe_factor=' + args.dupe_factor
+    #         bert_preprocessing_process = subprocess.Popen(bert_preprocessing_command, shell=True)
+    #
+    #         last_process = bert_preprocessing_process
+    #
+    #         # This could be better optimized (fine if all take equal time)
+    #         if shard_id % args.n_processes == 0 and shard_id > 0:
+    #             bert_preprocessing_process.wait()
+    #
+    #     for i in range(args.n_training_shards):
+    #         create_record_worker(args.output_file_prefix + '_training', i)
+    #
+    #     last_process.wait()
+    #
+    #     for i in range(args.n_test_shards):
+    #         create_record_worker(args.output_file_prefix + '_test', i)
+    #
+    #     last_process.wait()
 
 
 if __name__ == "__main__":
@@ -347,7 +347,7 @@ if __name__ == "__main__":
         '--max_seq_length',
         type=int,
         help='Specify the maximum sequence length',
-        default=512
+        default=128
     )
 
     parser.add_argument(
