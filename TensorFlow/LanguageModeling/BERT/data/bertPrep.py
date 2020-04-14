@@ -35,16 +35,19 @@ def main(args):
         args.input_files = args.input_files.split(',')
 
     hdf5_tfrecord_folder_prefix = "/lower_case_" + str(args.do_lower_case) + "_seq_len_" + str(args.max_seq_length) \
-                                  + "_max_pred_" + str(args.max_predictions_per_seq) + "_masked_lm_prob_" + str(args.masked_lm_prob) \
+                                  + "_max_pred_" + str(args.max_predictions_per_seq) + "_masked_lm_prob_" + str(
+        args.masked_lm_prob) \
                                   + "_random_seed_" + str(args.random_seed) + "_dupe_factor_" + str(args.dupe_factor) \
-                                  + "_shard_" + str(args.n_training_shards) + "_test_split_" + str(int(args.fraction_test_set * 100))
+                                  + "_shard_" + str(args.n_training_shards) + "_test_split_" + str(
+        int(args.fraction_test_set * 100))
     directory_structure = {
-        'download' : working_dir + '/download',    # Downloaded and decompressed
-        'extracted' : working_dir +'/extracted',    # Extracted from whatever the initial format is (e.g., wikiextractor)
-        'formatted' : working_dir + '/formatted_one_article_per_line',    # This is the level where all sources should look the same
-        'sharded' : working_dir + '/sharded',
-        'tfrecord' : working_dir + '/tfrecord' + hdf5_tfrecord_folder_prefix,
-        'hdf5': working_dir + '/hdf5'+ hdf5_tfrecord_folder_prefix,
+        'download': working_dir + '/download',  # Downloaded and decompressed
+        'extracted': working_dir + '/extracted',  # Extracted from whatever the initial format is (e.g., wikiextractor)
+        'formatted': working_dir + '/formatted_one_article_per_line',
+        # This is the level where all sources should look the same
+        'sharded': working_dir + '/sharded',
+        'tfrecord': working_dir + '/tfrecord' + hdf5_tfrecord_folder_prefix,
+        'hdf5': working_dir + '/hdf5' + hdf5_tfrecord_folder_prefix,
     }
 
     print('\nDirectory Structure:')
@@ -72,41 +75,26 @@ def main(args):
 
         if args.dataset == 'bookscorpus':
             books_path = directory_structure['download'] + '/bookscorpus'
-            #books_path = directory_structure['download']
+            # books_path = directory_structure['download']
             output_filename = directory_structure['formatted'] + '/bookscorpus_one_book_per_line.txt'
-            books_formatter = BookscorpusTextFormatting.BookscorpusTextFormatting(books_path, output_filename, recursive=True)
+            books_formatter = BookscorpusTextFormatting.BookscorpusTextFormatting(books_path, output_filename,
+                                                                                  recursive=True)
             books_formatter.merge()
 
         elif args.dataset == 'wikicorpus_en':
             if args.skip_wikiextractor == 0:
-                path_to_wikiextractor_in_container = 'WikiExtractor.py'
-                wikiextractor_command = path_to_wikiextractor_in_container + ' ' + directory_structure['download'] + '/' + args.dataset + '/wikicorpus_en.xml ' + '-b 100M --processes ' + str(args.n_processes) + ' -o ' + directory_structure['extracted'] + '/' + args.dataset
+                path_to_wikiextractor_in_container = 'python WikiExtractor.py'
+                wikiextractor_command = path_to_wikiextractor_in_container + ' ' + directory_structure[
+                    'download'] + '/' + args.dataset + '/wikicorpus_en.xml ' + '-b 100M --processes ' + str(
+                    args.n_processes) + ' -o ' + directory_structure['extracted'] + '/' + args.dataset
                 print('WikiExtractor Command:', wikiextractor_command)
                 wikiextractor_process = subprocess.run(wikiextractor_command, shell=True, check=True)
 
             wiki_path = directory_structure['extracted'] + '/wikicorpus_en'
             output_filename = directory_structure['formatted'] + '/wikicorpus_en_one_article_per_line.txt'
-            wiki_formatter = WikicorpusTextFormatting.WikicorpusTextFormatting(wiki_path, output_filename, recursive=True)
+            wiki_formatter = WikicorpusTextFormatting.WikicorpusTextFormatting(wiki_path, output_filename,
+                                                                               recursive=True)
             wiki_formatter.merge()
-
-        elif args.dataset == 'wikicorpus_zh':
-            assert False, 'wikicorpus_zh not fully supported at this time. The simplified/tradition Chinese data needs to be translated and properly segmented still, and should work once this step is added.'
-            if args.skip_wikiextractor == 0:
-                path_to_wikiextractor_in_container = '/workspace/wikiextractor/WikiExtractor.py'
-                wikiextractor_command = path_to_wikiextractor_in_container + ' ' + directory_structure['download'] + '/' + args.dataset + '/wikicorpus_zh.xml ' + '-b 100M --processes ' + str(args.n_processes) + ' -o ' + directory_structure['extracted'] + '/' + args.dataset
-                print('WikiExtractor Command:', wikiextractor_command)
-                wikiextractor_process = subprocess.run(wikiextractor_command, shell=True, check=True)
-
-            wiki_path = directory_structure['extracted'] + '/wikicorpus_zh'
-            output_filename = directory_structure['formatted'] + '/wikicorpus_zh_one_article_per_line.txt'
-            wiki_formatter = WikicorpusTextFormatting.WikicorpusTextFormatting(wiki_path, output_filename, recursive=True)
-            wiki_formatter.merge()
-
-        elif args.dataset == 'pubmed_baseline':
-            pubmed_path = directory_structure['download'] + '/pubmed' + '/baseline'
-            output_filename = directory_structure['formatted'] + '/pubmed_baseline_one_article_per_line.txt'
-            pubmed_formatter = PubMedTextFormatting.PubMedTextFormatting(pubmed_path, output_filename, recursive=True)
-            pubmed_formatter.merge()
 
     elif args.action == 'sharding':
         # Note: books+wiki requires user to provide list of input_files (comma-separated with no spaces)
@@ -119,7 +107,8 @@ def main(args):
                 elif args.dataset == 'wikicorpus_zh':
                     args.input_files = [directory_structure['formatted'] + '/wikicorpus_zh_one_article_per_line.txt']
                 elif args.dataset == 'books_wiki_en_corpus':
-                    args.input_files = [directory_structure['formatted'] + '/bookscorpus_one_book_per_line.txt', directory_structure['formatted'] + '/wikicorpus_en_one_article_per_line.txt']
+                    args.input_files = [directory_structure['formatted'] + '/bookscorpus_one_book_per_line.txt',
+                                        directory_structure['formatted'] + '/wikicorpus_en_one_article_per_line.txt']
                 elif args.dataset == 'pubmed_baseline':
                     args.input_files = [directory_structure['formatted'] + '/pubmed_baseline_one_article_per_line.txt']
 
@@ -130,10 +119,10 @@ def main(args):
 
             if not os.path.exists(directory_structure['sharded'] + '/' + args.dataset):
                 os.makedirs(directory_structure['sharded'] + '/' + args.dataset)
-                
+
             if not os.path.exists(directory_structure['sharded'] + '/' + args.dataset + '/training'):
                 os.makedirs(directory_structure['sharded'] + '/' + args.dataset + '/training')
-                
+
             if not os.path.exists(directory_structure['sharded'] + '/' + args.dataset + '/test'):
                 os.makedirs(directory_structure['sharded'] + '/' + args.dataset + '/test')
 
@@ -142,7 +131,8 @@ def main(args):
             # Different languages (e.g., Chinese simplified/traditional) may require translation and
             # other packages to be called from here -- just add a conditional branch for those extra steps
             segmenter = TextSharding.NLTKSegmenter()
-            sharding = TextSharding.Sharding(args.input_files, output_file_prefix, args.n_training_shards, args.n_test_shards, args.fraction_test_set)
+            sharding = TextSharding.Sharding(args.input_files, output_file_prefix, args.n_training_shards,
+                                             args.n_test_shards, args.fraction_test_set)
 
             sharding.load_articles()
             sharding.segment_articles_into_sentences(segmenter)
@@ -155,10 +145,10 @@ def main(args):
     elif args.action == 'create_tfrecord_files':
         if not os.path.exists(directory_structure['tfrecord'] + "/" + args.dataset):
             os.makedirs(directory_structure['tfrecord'] + "/" + args.dataset)
-        
+
         if not os.path.exists(directory_structure['tfrecord'] + "/" + args.dataset + '/training'):
             os.makedirs(directory_structure['tfrecord'] + "/" + args.dataset + '/training')
-            
+
         if not os.path.exists(directory_structure['tfrecord'] + "/" + args.dataset + '/test'):
             os.makedirs(directory_structure['tfrecord'] + "/" + args.dataset + '/test')
 
@@ -166,8 +156,11 @@ def main(args):
 
         def create_record_worker(filename_prefix, shard_id, output_format='tfrecord', split='training'):
             bert_preprocessing_command = 'python utils/create_pretraining_data.py'
-            bert_preprocessing_command += ' --input_file=' + directory_structure['sharded'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
-            bert_preprocessing_command += ' --output_file=' + directory_structure['tfrecord'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(shard_id) + '.' + output_format
+            bert_preprocessing_command += ' --input_file=' + directory_structure[
+                'sharded'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
+            bert_preprocessing_command += ' --output_file=' + directory_structure[
+                'tfrecord'] + '/' + args.dataset + '/' + split + '/' + filename_prefix + '_' + str(
+                shard_id) + '.' + output_format
             bert_preprocessing_command += ' --vocab_file=' + args.vocab_file
             bert_preprocessing_command += ' --do_lower_case' if args.do_lower_case else ''
             bert_preprocessing_command += ' --max_seq_length=' + str(args.max_seq_length)
@@ -198,44 +191,6 @@ def main(args):
         last_process.wait()
 
 
-    # elif args.action == 'create_hdf5_files':
-    #     assert False, 'HDF5 format not fully supported in this release.'
-    #
-    #     if not os.path.exists(directory_structure['hdf5'] + "/" + args.dataset):
-    #         os.makedirs(directory_structure['hdf5'] + "/" + args.dataset)
-    #
-    #     last_process = None
-    #
-    #     def create_record_worker(filename_prefix, shard_id, output_format='hdf5'):
-    #         bert_preprocessing_command = 'python /workspace/bert/utils/create_pretraining_data.py'
-    #         bert_preprocessing_command += ' --input_file=' + directory_structure['sharded'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.txt'
-    #         bert_preprocessing_command += ' --output_file=' + directory_structure['hdf5'] + '/' + args.dataset + '/' + filename_prefix + '_' + str(shard_id) + '.' + output_format
-    #         bert_preprocessing_command += ' --vocab_file=' + args.vocab_file
-    #         bert_preprocessing_command += ' --do_lower_case' if args.do_lower_case else ''
-    #         bert_preprocessing_command += ' --max_seq_length=' + args.max_seq_length
-    #         bert_preprocessing_command += ' --max_predictions_per_seq=' + args.max_predictions_per_seq
-    #         bert_preprocessing_command += ' --masked_lm_prob=' + args.masked_lm_prob
-    #         bert_preprocessing_command += ' --random_seed=' + args.random_seed
-    #         bert_preprocessing_command += ' --dupe_factor=' + args.dupe_factor
-    #         bert_preprocessing_process = subprocess.Popen(bert_preprocessing_command, shell=True)
-    #
-    #         last_process = bert_preprocessing_process
-    #
-    #         # This could be better optimized (fine if all take equal time)
-    #         if shard_id % args.n_processes == 0 and shard_id > 0:
-    #             bert_preprocessing_process.wait()
-    #
-    #     for i in range(args.n_training_shards):
-    #         create_record_worker(args.output_file_prefix + '_training', i)
-    #
-    #     last_process.wait()
-    #
-    #     for i in range(args.n_test_shards):
-    #         create_record_worker(args.output_file_prefix + '_test', i)
-    #
-    #     last_process.wait()
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Preprocessing Application for Everything BERT-related'
@@ -246,11 +201,11 @@ if __name__ == "__main__":
         type=str,
         help='Specify the action you want the app to take. e.g., generate vocab, segment, create tfrecords',
         choices={
-            'download',                   # Download and verify mdf5/sha sums
-            'text_formatting',            # Convert into a file that contains one article/book per line
-            'sharding',                   # Convert previous formatted text into shards containing one sentence per line
-            'create_tfrecord_files',      # Turn each shard into a TFrecord with masking and next sentence prediction info
-            'create_hdf5_files'           # Turn each shard into a HDF5 file with masking and next sentence prediction info
+            'download',  # Download and verify mdf5/sha sums
+            'text_formatting',  # Convert into a file that contains one article/book per line
+            'sharding',  # Convert previous formatted text into shards containing one sentence per line
+            'create_tfrecord_files',  # Turn each shard into a TFrecord with masking and next sentence prediction info
+            'create_hdf5_files'  # Turn each shard into a HDF5 file with masking and next sentence prediction info
         }
     )
 
