@@ -159,6 +159,7 @@ class Sharding:
             max_sentences = max(max_sentences, current_length)
             total_sentences += current_length
 
+        print('Total sentences is ',total_sentences)
         n_sentences_assigned_to_training = int((1 - self.fraction_test_set) * total_sentences)
         nominal_sentences_per_training_shard = n_sentences_assigned_to_training // self.n_training_shards
         nominal_sentences_per_test_shard = (total_sentences - n_sentences_assigned_to_training) // self.n_test_shards
